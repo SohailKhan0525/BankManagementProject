@@ -29,6 +29,12 @@ class Bank:
             json.dump(cls.data, f, indent=4)
 
     @classmethod
+    def reload(cls):
+        """Reload database after any update"""
+        with open(cls.database) as f:
+            cls.data = json.load(f)
+
+    @classmethod
     def generate_acc_no(cls):
         alpha = random.choices(string.ascii_letters, k=6)
         num = random.choices(string.digits, k=3)
@@ -39,16 +45,18 @@ class Bank:
 
     @classmethod
     def create_account(cls, name, age, email, pin):
+        pin = str(pin)
         if age < 18:
             return False, "Age must be 18 or above."
-        if len(str(pin)) != 4:
+
+        if len(pin) != 4:
             return False, "PIN must be 4 digits."
 
         info = {
             "name": name,
             "age": age,
             "email": email,
-            "pin": pin,
+            "pin": pin,               # store as string
             "accountno": cls.generate_acc_no(),
             "balance": 0,
         }
@@ -59,8 +67,9 @@ class Bank:
 
     @classmethod
     def login(cls, accno, pin):
+        pin = str(pin)
         for u in cls.data:
-            if u["accountno"] == accno and u["pin"] == pin:
+            if u["accountno"] == accno and str(u["pin"]) == pin:
                 return True, u
         return False, None
 
@@ -68,6 +77,7 @@ class Bank:
     def deposit(cls, user, amount):
         user["balance"] += amount
         cls.save()
+        cls.reload()
 
     @classmethod
     def withdraw(cls, user, amount):
@@ -75,27 +85,41 @@ class Bank:
             return False
         user["balance"] -= amount
         cls.save()
+        cls.reload()
         return True
 
     @classmethod
     def update(cls, user, name, email, pin):
-        if name:
+
+        # Only update if field is NOT empty
+        if name.strip() != "":
             user["name"] = name
-        if email:
+
+        if email.strip() != "":
             user["email"] = email
-        if pin:
+
+        if pin.strip() != "":
+            pin = str(pin)
             if len(pin) != 4:
                 return False, "PIN must be 4 digits."
             user["pin"] = pin
 
         cls.save()
-        return True, "Updated successfully."
+        cls.reload()
+
+        # return updated user from DB
+        for u in cls.data:
+            if u["accountno"] == user["accountno"]:
+                return True, u
+
+        return True, user
 
     @classmethod
     def delete(cls, user):
         acc = user["accountno"]
         cls.data = [u for u in cls.data if u["accountno"] != acc]
         cls.save()
+        cls.reload()
 
 
 # ============================================================
@@ -189,16 +213,16 @@ elif menu == "Login":
             new_pin = st.text_input("New PIN (optional)", max_chars=4)
 
             if st.button("Update Details"):
-                ok, msg = Bank.update(user, new_name, new_email, new_pin)
+                ok, updated_user = Bank.update(user, new_name, new_email, new_pin)
                 if ok:
-                    st.success(msg)
+                    st.success("Updated successfully!")
 
-                    # IMPORTANT FIX — refresh updated user in session_state
-                    st.session_state["user"] = user
+                    # Refresh stored user correctly
+                    st.session_state["user"] = updated_user
 
                     st.rerun()
                 else:
-                    st.error(msg)
+                    st.error(updated_user)
 
         # Delete account
         if choice == "Delete Account":
@@ -229,4 +253,3 @@ else:
     - Delete account  
     - JSON database  
     """)
-
