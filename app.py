@@ -5,7 +5,7 @@ import string
 from pathlib import Path
 
 # ============================================================
-#   BANK CLASS — SAME LOGIC, BUT STREAMLIT FRIENDLY
+#   BANK CLASS
 # ============================================================
 
 class Bank:
@@ -41,7 +41,6 @@ class Bank:
     def create_account(cls, name, age, email, pin):
         if age < 18:
             return False, "Age must be 18 or above."
-
         if len(str(pin)) != 4:
             return False, "PIN must be 4 digits."
 
@@ -88,16 +87,15 @@ class Bank:
             if len(pin) != 4:
                 return False, "PIN must be 4 digits."
             user["pin"] = pin
+
         cls.save()
         return True, "Updated successfully."
 
     @classmethod
     def delete(cls, user):
         acc = user["accountno"]
-       # Keep only users whose account number does NOT match
         cls.data = [u for u in cls.data if u["accountno"] != acc]
         cls.save()
-
 
 
 # ============================================================
@@ -153,12 +151,12 @@ elif menu == "Login":
             st.session_state["user"] = user
             st.success("Logged in successfully!")
 
-    # If logged in, display dashboard
+    # Dashboard if logged in
     if "user" in st.session_state:
         user = st.session_state["user"]
 
         st.subheader(f"👋 Welcome, {user['name']}!")
-        st.info(f"**Balance:** ${user['balance']}")
+        st.info(f"💰 **Balance:** ${user['balance']}")
 
         choice = st.radio("Choose Action", ["Deposit", "Withdraw", "Update Info", "Delete Account"])
 
@@ -194,7 +192,10 @@ elif menu == "Login":
                 ok, msg = Bank.update(user, new_name, new_email, new_pin)
                 if ok:
                     st.success(msg)
+
+                    # IMPORTANT FIX — refresh updated user in session_state
                     st.session_state["user"] = user
+
                     st.rerun()
                 else:
                     st.error(msg)
@@ -203,6 +204,7 @@ elif menu == "Login":
         if choice == "Delete Account":
             st.error("⚠ This will permanently delete your account.")
             confirm = st.checkbox("I understand, delete my account")
+
             if confirm and st.button("Delete My Account"):
                 Bank.delete(user)
                 st.session_state.pop("user")
@@ -222,10 +224,9 @@ else:
     
     Features:
     - Create account  
-    - Deposit/Withdraw  
-    - View & update details  
+    - Deposit / Withdraw  
+    - View & Update details  
     - Delete account  
     - JSON database  
     """)
-
 
