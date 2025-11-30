@@ -194,6 +194,7 @@ elif menu == "Login":
                 ok, msg = Bank.update(user, new_name, new_email, new_pin)
                 if ok:
                     st.success(msg)
+                    st.session_state["user"] = user
                     st.rerun()
                 else:
                     st.error(msg)
@@ -226,4 +227,5 @@ else:
     - Delete account  
     - JSON database  
     """)
+
 
