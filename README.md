@@ -14,7 +14,7 @@ Both versions allow users to create accounts, deposit and withdraw money, update
 
 ## 🌐 Live Web App
 
-👉 Add your Streamlit deployment link here
+👉 (Here's the link to use)[https://bankmanagementproject-brt9pt282uavy8ddzzy7ql.streamlit.app/]
 
 
 ---
